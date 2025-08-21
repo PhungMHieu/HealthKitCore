@@ -12,7 +12,7 @@ class MySceneDelegate: NSObject, UIWindowSceneDelegate, ObservableObject {
         print("sceneDidBecomeActive")
     }
     func sceneWillEnterForeground(_ scene: UIScene) {
-        
+        HealthKitManager.shared.requestAuthorization()
     }
 }
 
@@ -50,12 +50,12 @@ class MyAppDelegate: NSObject, UIApplicationDelegate, ObservableObject {
 }
 @main
 struct HealthAppTestSettingCodeYourselftApp: App {
+    @Environment(\.scenePhase) private var scenePhase
+    @UIApplicationDelegateAdaptor(MyAppDelegate.self) var appDelegate
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .onAppear(){
-                    HealthKitManager.shared.requestAuthorization()
-                }
         }
     }
 }
