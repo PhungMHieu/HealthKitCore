@@ -6,3 +6,8 @@
 //
 
 import Foundation
+
+struct BloodPressure {
+    let systolic: Double
+    let diastolic: Double
+}
