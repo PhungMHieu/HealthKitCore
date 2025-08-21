@@ -135,13 +135,13 @@ class HealthKitManager : ObservableObject {
     }
     func requestAuthorization() {
         healthStore.requestAuthorization(toShare: shareTypes, read: readTypes) { success, error in
-            if success {
-                if(self.checkAuthorizationStatus(type:))
-                self.fetchValueQuantity(typeIndentifier: .quantity(.heartRate))
-                
-            } else {
-                print("errors")
-            }
+//            if success {
+//                if(self.checkAuthorizationStatus(type:))
+//                self.fetchValueQuantity(typeIndentifier: .quantity(.heartRate))
+//                
+//            } else {
+//                print("errors")
+//            }
         }
     }
 }
