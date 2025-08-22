@@ -11,12 +11,26 @@ import Charts
 
 struct ContentView: View {
     @StateObject private var healthKitManager = HealthKitManager.shared
+    @State private var selectedInterval: HealthKitManager.ChartInterval = .week
     
     var body: some View {
         VStack {
             Text("Step Count Chart")
                 .font(.title)
                 .padding()
+            
+            // Picker để chọn interval
+            Picker("Chart Interval", selection: $selectedInterval) {
+//                Text("Ngày").tag(HealthKitManager.ChartInterval.day)
+                Text("Tuần").tag(HealthKitManager.ChartInterval.week)
+                Text("Tháng").tag(HealthKitManager.ChartInterval.month)
+//                Text("Năm").tag(HealthKitManager.ChartInterval.year)
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            .padding()
+            .onChange(of: selectedInterval) { _,newInterval in
+                healthKitManager.updateChartInterval(for: .quantity(.stepCount), interval: newInterval)
+            }
             
             if let stepDataDict = healthKitManager.aggregatedData[.stepCount] {
                 let stepDataArray = stepDataDict.map { (date, steps) in
@@ -32,10 +46,31 @@ struct ContentView: View {
                     .foregroundStyle(.blue)
                 }
                 .chartXAxis {
-                    AxisMarks(values: .stride(by: .day)) { value in
-                        AxisGridLine()
-                        AxisTick()
-                        AxisValueLabel(format: .dateTime.day().month())
+                    switch selectedInterval {
+                    case .day:
+                        AxisMarks(values: .stride(by: .day)) { value in
+                            AxisGridLine()
+                            AxisTick()
+                            AxisValueLabel(format: .dateTime.day().week())
+                        }
+                    case .week:
+                        AxisMarks(values: .stride(by: .weekOfYear)) { value in
+                            AxisGridLine()
+                            AxisTick()
+                            AxisValueLabel(format: .dateTime.week().month())
+                        }
+                    case .month:
+                        AxisMarks(values: .stride(by: .month)) { value in
+                            AxisGridLine()
+                            AxisTick()
+                            AxisValueLabel(format: .dateTime.month().year())
+                        }
+                    case .year:
+                        AxisMarks(values: .stride(by: .year)) { value in
+                            AxisGridLine()
+                            AxisTick()
+                            AxisValueLabel(format: .dateTime.year())
+                        }
                     }
                 }
                 .frame(height: 300)

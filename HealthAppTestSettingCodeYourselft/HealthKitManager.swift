@@ -79,8 +79,11 @@ class HealthKitManager : ObservableObject {
                     queueGlobal.async {
                         self.startObserver(typeIndentifier: .quantity(.bloodPressureSystolic), isStatisTiced: false)
                     }
+//                    queueGlobal.async {
+//                        self.startObserver(typeIndentifier: .quantity(.stepCount), isStatisTiced: true,interval: ChartInterval.day)
+//                    }
                     queueGlobal.async {
-                        self.startObserver(typeIndentifier: .quantity(.stepCount), isStatisTiced: true,interval: ChartInterval.day)
+                        self.startObserver(typeIndentifier: .quantity(.stepCount), isStatisTiced: false)
                     }
 
                 }
@@ -121,16 +124,19 @@ class HealthKitManager : ObservableObject {
                 let calendar = Calendar.current
                 switch interval {
                 case .day:
+//                    break
                     startDate = calendar.date(byAdding: .day, value: -7, to: Date())!
                 case .week:
                     startDate = calendar.date(byAdding: .weekOfYear, value: -1, to: Date())!
                 case .month:
                     startDate = calendar.date(byAdding: .month, value: -1, to: Date())!
                 case .year:
+//                    break
                     startDate = calendar.date(byAdding: .year, value: -1, to: Date())!
                 }
+                print("Start date: \(startDate)")
                 if let samepleType = typeIndentifier.toSampleType() as? HKQuantityType{
-                    self.fetchValueForChart(type: samepleType, interval: interval, startDate: startDate)
+                    self.fetchValueForChart(type: samepleType, interval: ChartInterval.day, startDate: startDate)
                 }
                 
             }
@@ -182,6 +188,10 @@ class HealthKitManager : ObservableObject {
         healthStore.execute(query)
     }
     
+    func fetchStepCountForDay() {
+        
+    }
+    
     func runAnchoredQuery(for sampleType: HKSampleType) {
         let query = HKAnchoredObjectQuery(
             type: sampleType,
@@ -218,6 +228,7 @@ class HealthKitManager : ObservableObject {
                             unit = HKUnit.count()
                         }
                         let value = quantitySample.quantity.doubleValue(for: unit)
+                        print(value)
                         DispatchQueue.main.async{
                             self?.quantityValues[identifier] = value
                         }
@@ -305,6 +316,28 @@ extension HealthKitManager {
             case .month: return DateComponents(month: 1)
             case .year: return DateComponents(year: 1)
             }
+        }
+    }
+    
+    func updateChartInterval(for typeIdentifier: HealthDataTypeIdentifier, interval: ChartInterval) {
+        let calendar = Calendar.current
+        let startDate: Date
+        
+        switch interval {
+        case .day:
+//            break
+            startDate = calendar.date(byAdding: .day, value: -7, to: Date())!
+        case .week:
+            startDate = calendar.date(byAdding: .weekOfYear, value: -1, to: Date())!
+        case .month:
+            startDate = calendar.date(byAdding: .month, value: -1, to: Date())!
+        case .year:
+//            break
+            startDate = calendar.date(byAdding: .year, value: -5, to: Date())!
+        }
+        
+        if let sampleType = typeIdentifier.toSampleType() as? HKQuantityType {
+            fetchValueForChart(type: sampleType, interval: .day, startDate: startDate)
         }
     }
 }

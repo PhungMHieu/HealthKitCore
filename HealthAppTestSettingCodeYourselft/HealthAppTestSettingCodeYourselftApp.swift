@@ -12,7 +12,7 @@ class MySceneDelegate: NSObject, UIWindowSceneDelegate, ObservableObject {
         print("sceneDidBecomeActive")
     }
     func sceneWillEnterForeground(_ scene: UIScene) {
-        HealthKitManager.shared.requestAuthorization()
+//        HealthKitManager.shared.requestAuthorization()
     }
 }
 
