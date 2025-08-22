@@ -15,6 +15,7 @@ class HealthKitManager : ObservableObject {
     @Published var quantityValues: [HKQuantityTypeIdentifier: Double] = [:]
     @Published var categorySamples: [HKCategoryTypeIdentifier: [HKCategorySample]] = [:]
     @Published var workouts: [HKWorkoutActivityType: [HKWorkout]] = [:]
+    @Published var quantityStatistics: [HKQuantityTypeIdentifier: Double] = [:]
     // Gộp steps theo interval
     @Published var aggregatedData: [HKQuantityTypeIdentifier: [Date: Double]] = [:]
     
@@ -79,9 +80,9 @@ class HealthKitManager : ObservableObject {
                     queueGlobal.async {
                         self.startObserver(typeIndentifier: .quantity(.bloodPressureSystolic), isStatisTiced: false)
                     }
-//                    queueGlobal.async {
-//                        self.startObserver(typeIndentifier: .quantity(.stepCount), isStatisTiced: true,interval: ChartInterval.day)
-//                    }
+                    queueGlobal.async {
+                        self.startObserver(typeIndentifier: .quantity(.stepCount), isStatisTiced: false, isToday: true)
+                    }
                     queueGlobal.async {
                         self.startObserver(typeIndentifier: .quantity(.stepCount), isStatisTiced: false)
                     }
@@ -106,7 +107,7 @@ class HealthKitManager : ObservableObject {
         return status == .sharingAuthorized
     }
     
-    func startObserver(typeIndentifier: HealthDataTypeIdentifier, isStatisTiced: Bool, interval:ChartInterval? = nil) {
+    func startObserver(typeIndentifier: HealthDataTypeIdentifier, isStatisTiced: Bool, interval:ChartInterval? = nil, isToday: Bool? = nil) {
         guard let sampleType = typeIndentifier.toSampleType() else {
                 fatalError("*** Unable to get the sample type ***")
             }
@@ -118,6 +119,10 @@ class HealthKitManager : ObservableObject {
             }
             
             self.fetchLatestValueWithAnchor(typeIdentifier: typeIndentifier)
+            guard let isToday = isToday else { return }
+            if isToday{
+                self.fetchToday(for: sampleType)
+            }
             if(isStatisTiced){
                 guard let interval = interval else { return }
                 let startDate:Date
@@ -188,10 +193,50 @@ class HealthKitManager : ObservableObject {
         healthStore.execute(query)
     }
     
-    func fetchStepCountForDay() {
+    func fetchToday(for sampleType: HKSampleType) {
+        guard let quantityType = sampleType as? HKQuantityType else { return }
         
+        // Bắt đầu từ 0h hôm nay
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
+        
+        // Tạo query thống kê
+        let query = HKStatisticsQuery(quantityType: quantityType,
+                                      quantitySamplePredicate: predicate,
+                                      options: .cumulativeSum) { _, result, error in
+            if let error = error {
+                print("Lỗi khi fetch dữ liệu: \(error.localizedDescription)")
+                return
+            }
+            
+            if let sum = result?.sumQuantity() {
+                let unit: HKUnit
+                let stringId = quantityType.identifier
+                let identifier = HKQuantityTypeIdentifier(rawValue: stringId)
+                // Chọn đơn vị phù hợp theo loại dữ liệu
+                switch identifier {
+                case .heartRate:
+                    unit = HKUnit.count().unitDivided(by: .minute())
+                case .stepCount:
+                    unit = HKUnit.count()
+                case .distanceWalkingRunning:
+                    unit = HKUnit.meter()
+                case .bloodPressureSystolic, .bloodPressureDiastolic:
+                    unit = HKUnit.millimeterOfMercury()
+                default:
+                    unit = HKUnit.count()
+                }
+                let value = sum.doubleValue(for: unit)
+                self.quantityStatistics[identifier] = value
+//                print("Hôm nay \(quantityType.identifier): \(value) \(unit)")
+            } else {
+                print("Không có dữ liệu hôm nay cho \(quantityType.identifier)")
+            }
+        }
+        
+        healthStore.execute(query)
     }
-    
+
     func runAnchoredQuery(for sampleType: HKSampleType) {
         let query = HKAnchoredObjectQuery(
             type: sampleType,

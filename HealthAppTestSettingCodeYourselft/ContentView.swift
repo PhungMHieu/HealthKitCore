@@ -13,6 +13,7 @@ struct ContentView: View {
     @StateObject private var healthKitManager = HealthKitManager.shared
     @State private var selectedInterval: HealthKitManager.ChartInterval = .week
     
+    let startOfDay = Calendar.current.startOfDay(for: Date())
     var body: some View {
         VStack {
             Text("Step Count Chart")
@@ -28,6 +29,9 @@ struct ContentView: View {
             }
             .pickerStyle(SegmentedPickerStyle())
             .padding()
+            .onAppear(){
+                healthKitManager.updateChartInterval(for: .quantity(.stepCount), interval: .week)
+            }
             .onChange(of: selectedInterval) { _,newInterval in
                 healthKitManager.updateChartInterval(for: .quantity(.stepCount), interval: newInterval)
             }
@@ -90,7 +94,7 @@ struct ContentView: View {
             }
             HStack {
                 Text("Bước chạy")
-                Text("\(healthKitManager.quantityValues[.stepCount] ?? 0, specifier: "%.0f")")
+                Text("\(healthKitManager.quantityStatistics[.stepCount] ?? 0, specifier: "%.0f")")
             }
             Button {
                 healthKitManager.requestAuthorization()
