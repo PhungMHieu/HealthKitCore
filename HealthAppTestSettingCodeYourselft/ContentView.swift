@@ -29,9 +29,6 @@ struct ContentView: View {
             }
             .pickerStyle(SegmentedPickerStyle())
             .padding()
-            .onAppear(){
-                healthKitManager.updateChartInterval(for: .quantity(.stepCount), interval: .week)
-            }
             .onChange(of: selectedInterval) { _,newInterval in
                 healthKitManager.updateChartInterval(for: .quantity(.stepCount), interval: newInterval)
             }

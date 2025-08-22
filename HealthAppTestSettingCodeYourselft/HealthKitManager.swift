@@ -86,6 +86,9 @@ class HealthKitManager : ObservableObject {
                     queueGlobal.async {
                         self.startObserver(typeIndentifier: .quantity(.stepCount), isStatisTiced: false)
                     }
+                    queueGlobal.async {
+                        self.startObserver(typeIndentifier: .quantity(.stepCount), isStatisTiced: true, interval: .week)
+                    }
 
                 }
             } else {
@@ -229,7 +232,9 @@ class HealthKitManager : ObservableObject {
                     unit = HKUnit.count()
                 }
                 let value = sum.doubleValue(for: unit)
-                self.quantityStatistics[identifier] = value
+                DispatchQueue.main.async{
+                    self.quantityStatistics[identifier] = value
+                }
 //                print("Hôm nay \(quantityType.identifier): \(value) \(unit)")
             } else {
                 print("Không có dữ liệu hôm nay cho \(quantityType.identifier)")
