@@ -121,7 +121,9 @@ class HealthKitManager : ObservableObject {
             self.fetchLatestValueWithAnchor(typeIdentifier: typeIndentifier)
             guard let isToday = isToday else { return }
             if isToday{
-                self.fetchToday(for: sampleType)
+                DispatchQueue.main.async {
+                    self.fetchToday(for: sampleType)
+                }
             }
             if(isStatisTiced){
                 guard let interval = interval else { return }
